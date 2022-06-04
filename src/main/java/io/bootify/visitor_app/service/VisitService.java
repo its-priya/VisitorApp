@@ -1,35 +1,44 @@
 package io.bootify.visitor_app.service;
 
 import io.bootify.visitor_app.domain.Flat;
+import io.bootify.visitor_app.domain.User;
 import io.bootify.visitor_app.domain.Visit;
 import io.bootify.visitor_app.domain.Visitor;
 import io.bootify.visitor_app.model.VisitDTO;
 import io.bootify.visitor_app.model.VisitStatus;
 import io.bootify.visitor_app.repos.FlatRepository;
+import io.bootify.visitor_app.repos.UserRepository;
 import io.bootify.visitor_app.repos.VisitRepository;
 import io.bootify.visitor_app.repos.VisitorRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 
 @Service
 public class VisitService {
-
+    private static Logger LOGGER = LoggerFactory.getLogger(VisitService.class);
     private final VisitRepository visitRepository;
     private final VisitorRepository visitorRepository;
 
-    private final FlatRepository flatRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private FlatRepository flatRepository;
 
     public VisitService(final VisitRepository visitRepository,
                         final VisitorRepository visitorRepository, FlatRepository flatRepository) {
         this.visitRepository = visitRepository;
         this.visitorRepository = visitorRepository;
-        this.flatRepository = flatRepository;
     }
 
     public List<VisitDTO> findAll() {
@@ -78,6 +87,33 @@ public class VisitService {
         }
         else
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status not updated.");
+    }
+
+    @Transactional
+    public void updateVisitStatus(Long userId, Long visitId, VisitStatus visitStatus){
+        LOGGER.info("Updating visit {} status to {}", visitId, visitStatus);
+        Visit visit= visitRepository.findById(visitId).get();
+        Flat flat= visit.getFlat();
+
+        User user= userRepository.findById(userId).get();
+        Flat userFlat= user.getFlat();
+        if(flat == userFlat && visit.getStatus().equals(VisitStatus.PENDING)){
+            visit.setStatus(visitStatus);
+            visitRepository.save(visit);
+        }else{
+            LOGGER.error("Invalid update visit request by user {} for visit {}", userId, visitId);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Flat is not mapped or Status is invalid");
+        }
+    }
+
+    public List<VisitDTO> getAllVisitsByUserId(Long userId){
+        User user= userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Flat flat= user.getFlat();
+        return visitRepository.findByFlat(flat)
+                .stream()
+                .map(visit -> mapToDTO(visit, new VisitDTO()))
+                .collect(Collectors.toList());
     }
 
     public void update(final Long id, final VisitDTO visitDTO) {
