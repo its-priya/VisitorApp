@@ -62,7 +62,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    private UserDTO mapToDTO(final User user, final UserDTO userDTO) {
+    public UserDTO mapToDTO(final User user, final UserDTO userDTO) {
         userDTO.setId(user.getId());
         userDTO.setName(user.getName());
         userDTO.setPhone(user.getPhone());
@@ -73,7 +73,7 @@ public class UserService {
         return userDTO;
     }
 
-    private User mapToEntity(final UserDTO userDTO, final User user) {
+    public User mapToEntity(final UserDTO userDTO, final User user) {
         user.setName(userDTO.getName());
         user.setPhone(userDTO.getPhone());
         user.setEmail(userDTO.getEmail());

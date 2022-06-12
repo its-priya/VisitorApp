@@ -1,6 +1,7 @@
 package io.bootify.visitor_app.domain;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
@@ -58,4 +59,11 @@ public class User {
     @Column(nullable = false)
     private OffsetDateTime lastUpdated;
 
+    public void updateRole(Optional<Role> role) {
+        this.role= role.get();
+    }
+
+    public void updateFlat(Optional<Flat> flat) {
+        this.flat= flat.get();
+    }
 }

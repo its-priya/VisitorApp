@@ -49,7 +49,7 @@ public class AddressService {
         addressRepository.deleteById(id);
     }
 
-    private AddressDTO mapToDTO(final Address address, final AddressDTO addressDTO) {
+    public AddressDTO mapToDTO(final Address address, final AddressDTO addressDTO) {
         addressDTO.setId(address.getId());
         addressDTO.setLine1(address.getLine1());
         addressDTO.setLine2(address.getLine2());
